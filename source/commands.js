@@ -6,7 +6,6 @@ export class Command {
       this.invoker = undefined
       this.options = typeof options !== 'undefined' ? options : {}
       this.async = false
-      this.persistable = true
     }
     execute(){
     }
@@ -27,46 +26,15 @@ export class UndoableCommand extends Command {
 }
  
 export class CommandInvoker extends Observable {
- 
-  constructor(receiver, storage){
+   constructor(receiver){
     super()
     this.commandChain = []
     this.commandStack = []
     this.redoStack = []
     this.receiver = receiver
-    this.storage = storage
   }
  
-  // <summary>
-  // Returns an array with actions persisted to the storage service
-  // </summary>
-  restore(availableCommands){
-    let macro = []
-    if (!Array.isArray(availableCommands) || availableCommands.length === 0)
-      return
- 
-    if (typeof this.storage !== 'undefined' && this.storage !== null ){
-      let items = this.storage.getAll()
-      items.forEach(commandInfo => {
-        let command = null
-        for(let cmdIndex = 0; cmdIndex < availableCommands.length; cmdIndex++){
-          if (commandInfo.type === availableCommands[cmdIndex].name){
-            command = availableCommands[cmdIndex];
-            break;
-          }
-        }
-        if (command === null){
-          throw Error(`The command ${commandInfo.type} is not defined within the commands parameters`)
-        }
-        var action = Object.create(command.prototype)
-        action.constructor(commandInfo.options)
-        macro.push(action)
-      })
-      this.storage.clear()
-    }
-    return macro
-  }
- 
+
   // <summary>
   // Add a command to the command chain
   // </summary>
@@ -108,13 +76,11 @@ export class CommandInvoker extends Observable {
   // </summary>
   execute(){
     return new Promise((resolveCallback, rejectCallback) => {
-      this.resolveCallback = resolveCallback
-      this.rejectCallback = rejectCallback
+      this.inProgress = true
       this.on('onNextCommand', this.executeNext)
       this.on('onCommandComplete', this.onCommandComplete)
-      this.on('onComplete', this.onComplete)
-      this.on('onCommandFailure', this.onCommandFailure)
-      this.inProgress = true
+      this.on('onComplete', this.onComplete.bind(this, resolveCallback))
+      this.on('onCommandFailure', this.onCommandFailure.bind(this, rejectCallback))
       this.trigger('onNextCommand')
     })
   }
@@ -141,12 +107,12 @@ export class CommandInvoker extends Observable {
     }
   }
  
-  onCommandFailure(command, error){
-    if (typeof this.rejectCallback !== 'undefined' &&
-      typeof this.rejectCallback === 'function'){
-      this.rejectCallback(error)
-    }
+  onCommandFailure(rejectCallback, command, error){
     this.clear()
+
+    if (typeof rejectCallback !== 'undefined' && typeof rejectCallback === 'function'){
+      rejectCallback(error)
+    }
   }
  
   // <summary>
@@ -165,15 +131,6 @@ export class CommandInvoker extends Observable {
     if (this.commandStack.indexOf(command) < 0){
       // Push it into the command stack
       this.commandStack.push(command)
-      // Avoid to send it to storage service if it's already there.
-      if (typeof command.persistable !== 'undefined' && command.persistable &&
-        typeof this.storage !== 'undefined' && this.storage !== null){
-        var index = this.storage.getAll().length
-        this.storage.addItem(index, {
-          type: command.constructor.name,
-          options: command.options
-        })
-      }
     }
  
     this.trigger('onNextCommand')
@@ -182,12 +139,12 @@ export class CommandInvoker extends Observable {
   // <summary>
   // Event triggered when there are not more commands to execute in the command chain
   // </summary>
-  onComplete(){
-    if (typeof this.resolveCallback !== 'undefined' &&
-      typeof this.resolveCallback === 'function'){
-      this.resolveCallback()
-    }
+  onComplete(resolveCallback){
     this.clear()
+
+    if (typeof resolveCallback !== 'undefined' && typeof resolveCallback === 'function'){
+      resolveCallback()
+    }
   }
  
   // <summary>
@@ -199,8 +156,6 @@ export class CommandInvoker extends Observable {
     this.off('onComplete', this.onComplete)
     this.off('onCommandFailure', this.onCommandFailure)
     this.commandChain.splice(0, this.commandChain.length)
-    this.resolveCallback = null
-    this.rejectCallback = null
     this.inProgress = false
   }
  
@@ -208,9 +163,9 @@ export class CommandInvoker extends Observable {
   // Returns true if an undoable action is available to undo.
   // </summary>
   canUndo(){
-    return this.commandStack.length > 0 &&
+    return !this.inProgress &&
+      this.commandStack.length > 0 &&
       this.commandStack[this.commandStack.length-1] instanceof UndoableCommand &&
-      !this.inProgress &&
       this.commandStack[this.commandStack.length-1].canUndo();
   }
  
@@ -219,18 +174,15 @@ export class CommandInvoker extends Observable {
   // </summary>
   undo(){
     return new Promise((resolveCallback, rejectCallback) => {
-      this.resolveCallback = resolveCallback
-      this.rejectCallback = rejectCallback
-      if (!this.inProgress){
-        this.on('onUndone', this.onUndone)
-        this.on('onUndoFailed', this.onUndoFailed)
-        this.undoNext()
-      }
+      this.inProgress = true
+      this.on('onUndone', this.onUndone.bind(this, resolveCallback))
+      this.on('onUndoFailed', this.onUndoFailed.bind(this, rejectCallback))
+      this.undoNext()
     })
   }
  
   canRedo(){
-    return this.redoStack.length > 0 && !this.inProgress
+    return !this.inProgress && this.redoStack.length > 0
   }
  
   // <summary>
@@ -253,7 +205,6 @@ export class CommandInvoker extends Observable {
  
     let action = this.commandStack.pop()
     try {
-      this.inProgress = true
       action.undo()
       if (!action.async){
         this.trigger('onUndone', action)
@@ -263,43 +214,34 @@ export class CommandInvoker extends Observable {
       this.commandStack.push(action)
       this.trigger('onUndoFailed', action, e)
     }
-    if (typeof action.persistable !== 'undefined' && action.persistable &&
-      typeof this.storage !== 'undefined' && this.storage !== null ){
-      this.storage.removeItem(this.commandStack.length)
-    }
   }
  
   // <summary>
   // Event triggered when an action was undone
   // </summary>
-  onUndone(command){
-    this.inProgress = false
+  onUndone(resolveCallback, command){
     this.off('onUndone', this.onUndone)
     this.off('onUndoFailed', this.onUndoFailed)
  
     if (typeof command !== 'undefined' && command !== null){
       this.redoStack.push(command)
     }
+
+    this.inProgress = false
  
-    if (typeof this.resolveCallback !== 'undefined' &&
-      typeof this.resolveCallback === 'function'){
-      this.resolveCallback()
+    if (typeof resolveCallback !== 'undefined' && typeof resolveCallback === 'function'){
+      resolveCallback()
     }
   }
  
-  onUndoFailed(command, error){
+  onUndoFailed(rejectCallback, command, error){
     this.off('onUndone', this.onUndone)
     this.off('onUndoFailed', this.onUndoFailed)
  
-    try {
-      if (typeof this.rejectCallback !== 'undefined' &&
-        typeof this.rejectCallback === 'function'){
-        this.rejectCallback(error)
-      }
-    }
-    finally {
-      this.resolveCallback = null
-      this.rejectCallback = null
+    this.inProgress = false
+ 
+    if (typeof rejectCallback !== 'undefined' && typeof rejectCallback === 'function'){
+      rejectCallback(error)
     }
   }
  
@@ -310,10 +252,6 @@ export class CommandInvoker extends Observable {
     this.redoStack.splice(0, this.redoStack.length)
     this.commandStack.splice(0, this.commandStack.length)
     this.clear()
- 
-    if (typeof this.storage !== 'undefined' && this.storage !== null ){
-      this.storage.clear()
-    }
   }
  
   // <summary>
