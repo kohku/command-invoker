@@ -24,6 +24,26 @@ export class UndoableCommand extends Command {
     undo(){
     }
 }
+
+export class CommandWrapper extends UndoableCommand {
+  constructor(params){
+    super(params.options || {})
+    this.executeFn = typeof params.execute !== 'function' ? params.execute : () => {}
+    this.undoFn = typeof params.undo !== 'function' ? params.undo : undefined
+  }
+ 
+  execute(){
+    this.executeFn()
+  }
+ 
+  undo(){
+    this.undoFn()
+  }
+ 
+  canUndo(){
+    return typeof this.undoFn !== 'undefined'
+  }
+}
  
 export class CommandInvoker extends Observable {
    constructor(receiver){
@@ -39,9 +59,10 @@ export class CommandInvoker extends Observable {
   // Add a command to the command chain
   // </summary>
   setCommand(command){
-    command.receiver = this.receiver
-    command.invoker = this;
-    this.commandChain.push(command);
+    let cmd = command instanceof Command ? command : new CommandWrapper(command)
+    cmd.receiver = this.receiver
+    cmd.invoker = this;
+    this.commandChain.push(cmd);
     try {
       command.validate(this.commandStack, this.commandChain)
     }
@@ -49,17 +70,17 @@ export class CommandInvoker extends Observable {
       this.commandChain.pop()
       throw Error(e)
     }
-    return command;
+    return cmd
   }
  
   // <summary>
   // Removes a command from the command chain
   // </summary>
   unsetCommand(command){
-    let index = this.commandChain.indexOf(command);
+    let index = this.commandChain.indexOf(command)
  
     if (index >= 0){
-      this.commandChain.splice(index, 1);
+      this.commandChain.splice(index, 1)
     }
   }
  
@@ -90,7 +111,7 @@ export class CommandInvoker extends Observable {
   // </summary>
   executeNext(){
     if (this.commandChain.length === 0){
-      this.trigger('onComplete');
+      this.trigger('onComplete')
       return
     }
  
@@ -166,7 +187,7 @@ export class CommandInvoker extends Observable {
     return !this.inProgress &&
       this.commandStack.length > 0 &&
       this.commandStack[this.commandStack.length-1] instanceof UndoableCommand &&
-      this.commandStack[this.commandStack.length-1].canUndo();
+      this.commandStack[this.commandStack.length-1].canUndo()
   }
  
   // <summary>
