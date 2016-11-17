@@ -1,35 +1,32 @@
 export class Observable {
-  constructor(){
-  }
- 
-  on(event, fn){
-    this._callbacks = this._callbacks || {}
-    (this._callbacks[event] = this._callbacks[event] || [])
+
+  on (event, fn) {
+    this._callbacks = this._callbacks || {}(this._callbacks[event] = this._callbacks[event] || [])
       .push(fn)
     return this
   }
- 
-  off(event, fn){
+
+  off (event, fn) {
     this._callbacks = this._callbacks || {}
- 
+
     // all
-    if (0 === arguments.length) {
+    if (arguments.length === 0) {
       this._callbacks = {}
       return this
     }
- 
+
     // specific event
     let callbacks = this._callbacks[event]
     if (!callbacks) return this
- 
+
     // remove all handlers
-    if (1 == arguments.length) {
+    if (arguments.length === 1) {
       delete this._callbacks[event]
       return this
     }
- 
+
     // remove specific handler
-    let cb;
+    let cb
     for (let i = 0; i < callbacks.length; i++) {
       cb = callbacks[i]
       if (cb === fn || cb.fn === fn) {
@@ -38,21 +35,21 @@ export class Observable {
         break
       }
     }
-    return this;
+    return this
   }
 
-  trigger(event){
+  trigger (event) {
     this._callbacks = this._callbacks || {}
     let args = [].slice.call(arguments, 1)
-      , callbacks = this._callbacks[event]
- 
+    let callbacks = this._callbacks[event]
+
     if (callbacks) {
-      callbacks = callbacks.slice(0);
+      callbacks = callbacks.slice(0)
       for (let i = 0, len = callbacks.length; i < len; ++i) {
         callbacks[i].apply(this, args)
       }
     }
- 
-    return this;
+
+    return this
   }
 }

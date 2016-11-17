@@ -1,22 +1,20 @@
-import { Observable } from './observable'
-import { Command, UndoableCommand, CommandWrapper, CommandInvoker } from './commands'
+import { Command, UndoableCommand, CommandInvoker } from './commands'
 import { NullCommand } from './nullCommand'
 
 const exports = module.exports = {}
 
-exports.CommandInvoker = function(receiver){
-    return new CommandInvoker(receiver)
-} 
-
-exports.Command = function(options){
-    return new Command(options)
+exports.CommandInvoker = function (receiver) {
+  return new CommandInvoker(receiver)
 }
 
-exports.UndoableCommand = function(options){
-    return new UndoableCommand(options)
+exports.Command = function (options) {
+  return new Command(options)
 }
 
-exports.NullCommand = function(options){
-    return new NullCommand(options)
+exports.UndoableCommand = function (options) {
+  return new UndoableCommand(options)
 }
 
+exports.NullCommand = function (options) {
+  return new NullCommand(options)
+}
