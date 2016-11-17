@@ -59,7 +59,10 @@ export class CommandInvoker extends Observable {
   // Add a command to the command chain
   // </summary>
   setCommand(command){
-    let cmd = command instanceof Command ? command : new CommandWrapper(command)
+    if (typeof command === 'undefined' || command === 'null'){
+      throw Error('Null argument exception.')
+    }
+    const cmd = command instanceof Command ? command : new CommandWrapper(command)
     cmd.receiver = this.receiver
     cmd.invoker = this;
     this.commandChain.push(cmd);
@@ -77,7 +80,7 @@ export class CommandInvoker extends Observable {
   // Removes a command from the command chain
   // </summary>
   unsetCommand(command){
-    let index = this.commandChain.indexOf(command)
+    const index = this.commandChain.indexOf(command)
  
     if (index >= 0){
       this.commandChain.splice(index, 1)
@@ -115,7 +118,7 @@ export class CommandInvoker extends Observable {
       return
     }
  
-    let action = this.commandChain.shift()
+    const action = this.commandChain.shift()
     try {
       action.execute()
       if (!action.async){
@@ -224,7 +227,7 @@ export class CommandInvoker extends Observable {
       return
     }
  
-    let action = this.commandStack.pop()
+    const action = this.commandStack.pop()
     try {
       action.undo()
       if (!action.async){

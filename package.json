@@ -2,10 +2,11 @@
   "name": "command-invoker",
   "version": "1.0.0",
   "description": "Module to help encapsulate method invocation",
-  "main": "index.js",
+  "main": "./distribution/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "babel source --presets babel-preset-es2015 --out-dir distribution"
+    "build": "babel source --presets babel-preset-es2015 --out-dir distribution",
+    "prepublish": "npm run build"
   },
   "repository": {
     "type": "git",
