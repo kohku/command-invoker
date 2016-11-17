@@ -4,33 +4,36 @@
   "description": "Module to help encapsulate method invocation",
   "main": "./distribution/index.js",
   "scripts": {
-  "test": "node test/index.js",
-  "build": "babel source --presets babel-preset-es2015 --out-dir distribution",
-  "prepublish": "npm run build"
+    "lint": "standard",
+    "test": "node test/index.js",
+    "posttest": "npm run lint",
+    "build": "babel source --presets babel-preset-es2015 --out-dir distribution",
+    "prepublish": "npm run build"
   },
   "repository": {
-  "type": "git",
-  "url": "git+https://github.com/kohku/command-invoker.git"
+    "type": "git",
+    "url": "git+https://github.com/kohku/command-invoker.git"
   },
   "keywords": [
-  "Command",
-  "Invoker",
-  "Encapsulate",
-  "Method",
-  "Invocation"
+    "Command",
+    "Invoker",
+    "Encapsulate",
+    "Method",
+    "Invocation"
   ],
   "author": "Daniel Cruz",
   "license": "MIT",
   "bugs": {
-  "url": "https://github.com/kohku/command-invoker/issues"
+    "url": "https://github.com/kohku/command-invoker/issues"
   },
   "homepage": "https://github.com/kohku/command-invoker#readme",
   "dependencies": {
-  "babel-cli": "^6.16.0",
-  "babel-preset-es2015": "^6.16.0",
-  "es6-promise": "^4.0.5"
+    "babel-cli": "^6.16.0",
+    "babel-preset-es2015": "^6.16.0",
+    "es6-promise": "^4.0.5"
   },
   "devDependencies": {
-  "standard": "^8.5.0"
+    "expect": "^1.20.2",
+    "standard": "^8.5.0"
   }
 }
