@@ -1,27 +1,59 @@
 'use strict'
 
 var expect = require('expect')
-var invoker = require('./../distribution/commands')
+var promise = require('es6-promise')
+var commands = require('./../distribution/commands')
 
-console.log(JSON.stringify(invoker.CommandInvoker))
+var receiver = {}
 
-// import { CommandInvoker, Command, UndoableCommand } from './../source/commands'
+var invoker = new commands.CommandInvoker(receiver)
 
-// const data = { value: 2 }
+expect(invoker).toExist()
+expect(invoker).toBeA(commands.CommandInvoker)
+expect(invoker.canUndo()).toBe(false)
+expect(invoker.canRedo()).toBe(false)
 
-// const invoker = new CommandInvoker(data)
+receiver.data = 2
 
-// invoker.setCommand({
-//   options: {
-//     step: 2
-//   },
-//   execute: () => {
-//     this.receiver.value += this.step
-//   },
-//   undo: () => {
-//     this.receiver.value -= this.step
-//   }
-// })
+// Applying a simple command
+invoker.apply({
+  options: { step: 2 },
+  validate: function (actionsPerformed, actionsToPerform) {
+  },
+  execute: function () {
+    receiver.data += this.options.step
+  },
+  undo: function () {
+    receiver.data -= this.options.step
+  }
+})
+.then(() => {
+  expect(receiver.data).toBe(4)
+  expect(invoker.canUndo()).toBe(true)
 
-// invoker.execute()
-expect(1).toBe(1)
+  // Undoing things
+  invoker.undo()
+  .then(() => {
+    expect(receiver.data).toBe(2)
+    expect(invoker.canUndo()).toBe(false)
+
+    invoker.apply({
+      options: { step: 2 },
+      execute: function () {
+        receiver.data += this.options.step
+      }
+    })
+    .then(() => {
+      expect(invoker.canUndo()).toBe(false)
+    })
+    .catch(error => {
+      throw error
+    })
+  })
+  .catch(error => {
+    throw error
+  })
+})
+.catch(error => {
+  console.log(error)
+})

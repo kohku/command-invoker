@@ -1,8 +1,11 @@
 export class Observable {
 
   on (event, fn) {
-    this._callbacks = this._callbacks || {}(this._callbacks[event] = this._callbacks[event] || [])
-      .push(fn)
+    this._callbacks = this._callbacks || {}
+    this._callbacks[event] = this._callbacks[event] || []
+    if (this._callbacks[event].indexOf(fn) < 0) {
+      this._callbacks[event].push(fn)
+    }
     return this
   }
 

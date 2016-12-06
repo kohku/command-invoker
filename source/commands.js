@@ -25,8 +25,13 @@ export class UndoableCommand extends Command {
 export class CommandWrapper extends UndoableCommand {
   constructor (params) {
     super(params.options || {})
-    this.executeFn = typeof params.execute !== 'function' ? params.execute : () => {}
-    this.undoFn = typeof params.undo !== 'function' ? params.undo : undefined
+    this.executeFn = typeof params.execute === 'function' ? params.execute : super.execute
+    this.validateFn = typeof params.validate === 'function' ? params.validate : super.validate
+    this.undoFn = typeof params.undo === 'function' ? params.undo : super.undo
+  }
+
+  validate () {
+    this.validateFn()
   }
 
   execute () {
@@ -63,7 +68,7 @@ export class CommandInvoker extends Observable {
     cmd.invoker = this
     this.commandChain.push(cmd)
     try {
-      command.validate(this.commandStack, this.commandChain)
+      cmd.validate(this.commandStack, this.commandChain)
     } catch (e) {
       this.commandChain.pop()
       throw Error(e)
