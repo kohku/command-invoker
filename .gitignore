@@ -38,5 +38,4 @@ jspm_packages
 
 .DS_Store
 
-node_modules  
-distribution
+node_modules

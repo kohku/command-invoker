@@ -1,59 +1,54 @@
-'use strict'
+const { expect } = require('chai');
+const commands = require('./../dist');
 
-var expect = require('expect')
-var promise = require('es6-promise')
-var commands = require('./../distribution/commands')
+// eslint-disable-next-line no-undef
+describe('CommandInvoker', () => {
+  // eslint-disable-next-line no-undef
+  it('Can be created', () => {
+    const receiver = {};
 
-var receiver = {}
+    const invoker = new commands.CommandInvoker(receiver);
 
-var invoker = new commands.CommandInvoker(receiver)
+    expect(invoker).to.be.a('object');
+    // eslint-disable-next-line no-unused-expressions
+    expect(invoker.canUndo()).to.be.false;
+    // eslint-disable-next-line no-unused-expressions
+    expect(invoker.canRedo()).to.be.false;
 
-expect(invoker).toExist()
-expect(invoker).toBeA(commands.CommandInvoker)
-expect(invoker.canUndo()).toBe(false)
-expect(invoker.canRedo()).toBe(false)
+    receiver.data = 2;
 
-receiver.data = 2
-
-// Applying a simple command
-invoker.apply({
-  options: { step: 2 },
-  validate: function (actionsPerformed, actionsToPerform) {
-  },
-  execute: function () {
-    receiver.data += this.options.step
-  },
-  undo: function () {
-    receiver.data -= this.options.step
-  }
-})
-.then(() => {
-  expect(receiver.data).toBe(4)
-  expect(invoker.canUndo()).toBe(true)
-
-  // Undoing things
-  invoker.undo()
-  .then(() => {
-    expect(receiver.data).toBe(2)
-    expect(invoker.canUndo()).toBe(false)
-
+    // Applying a simple command
     invoker.apply({
       options: { step: 2 },
-      execute: function () {
-        receiver.data += this.options.step
-      }
+      execute: (options) => {
+        receiver.data += options.step;
+      },
+      undo: (options) => {
+        receiver.data -= options.step;
+      },
     })
-    .then(() => {
-      expect(invoker.canUndo()).toBe(false)
-    })
-    .catch(error => {
-      throw error
-    })
-  })
-  .catch(error => {
-    throw error
-  })
-})
-.catch(error => {
-  console.log(error)
-})
+      .then(() => {
+        expect(receiver.data).to.equal(4);
+        expect(invoker.canUndo()).to.equal(true);
+
+        // Undoing things
+        invoker.undo()
+          .then(() => {
+            expect(receiver.data).toBe(2);
+            expect(invoker.canUndo()).toBe(false);
+
+            invoker.apply({
+              options: { step: 2 },
+              execute: (options) => {
+                receiver.data += options.step;
+              },
+            })
+              .then(() => {
+                expect(invoker.canUndo()).toBe(false);
+              });
+          });
+      })
+      // eslint-disable-next-line no-console
+      .catch(error => console.error(error));
+  });
+});

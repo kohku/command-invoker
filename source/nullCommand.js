@@ -1,8 +1,8 @@
-import { Command } from './commands'
+import Command from './command';
 
-export class NullCommand extends Command {
-  constructor (options) {
-    super(options)
-    this.persistable = false
+export default class NullCommand extends Command {
+  constructor(options) {
+    super(options);
+    this.persistable = false;
   }
 }

@@ -2,12 +2,11 @@
   "name": "command-invoker",
   "version": "1.0.0",
   "description": "Module to help encapsulate method invocation",
-  "main": "./distribution/index.js",
+  "main": "./dist/index.js",
   "scripts": {
     "lint": "standard",
-    "test": "node test/index.js",
-    "posttest": "npm run lint",
-    "build": "babel source --presets babel-preset-es2015 --out-dir distribution",
+    "test": "node ./node_modules/mocha/bin/mocha",
+    "build": "babel source --presets babel-preset-es2015 --out-dir dist",
     "prepublish": "npm run build"
   },
   "repository": {
@@ -33,7 +32,11 @@
     "es6-promise": "^4.0.5"
   },
   "devDependencies": {
-    "expect": "^1.20.2",
+    "chai": "^4.2.0",
+    "eslint": "^5.8.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.14.0",
+    "mocha": "^5.2.0",
     "standard": "^8.5.0"
   }
 }

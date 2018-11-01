@@ -1,20 +1,15 @@
-import { Command, UndoableCommand, CommandInvoker } from './commands'
-import { NullCommand } from './nullCommand'
+import CommandInvoker from './commandInvoker';
+import Command, { UndoableCommand, CommandWrapper } from './command';
+import NullCommand from './nullCommand';
 
-const exports = module.exports = {}
+const exports = module.exports || {};
 
-exports.CommandInvoker = function (receiver) {
-  return new CommandInvoker(receiver)
-}
+exports.CommandInvoker = receiver => new CommandInvoker(receiver);
 
-exports.Command = function (options) {
-  return new Command(options)
-}
+exports.Command = options => new Command(options);
 
-exports.UndoableCommand = function (options) {
-  return new UndoableCommand(options)
-}
+exports.CommandWrapper = options => new CommandWrapper(options);
 
-exports.NullCommand = function (options) {
-  return new NullCommand(options)
-}
+exports.UndoableCommand = options => new UndoableCommand(options);
+
+exports.NullCommand = options => new NullCommand(options);
