@@ -4,12 +4,12 @@ import NullCommand from './nullCommand';
 
 const exports = module.exports || {};
 
-exports.CommandInvoker = receiver => new CommandInvoker(receiver);
+exports.CreateInvoker = receiver => new CommandInvoker(receiver);
 
-exports.Command = options => new Command(options);
+exports.CreateCommand = options => new Command(options);
 
-exports.CommandWrapper = options => new CommandWrapper(options);
+exports.CreateCommandWrapper = options => new CommandWrapper(options);
 
-exports.UndoableCommand = options => new UndoableCommand(options);
+exports.CreateUndoableCommand = options => new UndoableCommand(options);
 
-exports.NullCommand = options => new NullCommand(options);
+exports.CreateNullCommand = options => new NullCommand(options);

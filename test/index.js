@@ -1,5 +1,5 @@
 const { expect } = require('chai');
-const commands = require('./../dist');
+const { CommandInvoker } = require('../dist');
 
 // eslint-disable-next-line no-undef
 describe('CommandInvoker', () => {
@@ -7,7 +7,7 @@ describe('CommandInvoker', () => {
   it('Can be created', () => {
     const receiver = {};
 
-    const invoker = new commands.CommandInvoker(receiver);
+    const invoker = new CommandInvoker(receiver);
 
     expect(invoker).to.be.a('object');
     // eslint-disable-next-line no-unused-expressions
