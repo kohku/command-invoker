@@ -16,22 +16,22 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var _exports = module.exports || {};
 
-_exports.CommandInvoker = function (receiver) {
+_exports.CreateInvoker = function (receiver) {
   return new _commandInvoker2.default(receiver);
 };
 
-_exports.Command = function (options) {
+_exports.CreateCommand = function (options) {
   return new _command2.default(options);
 };
 
-_exports.CommandWrapper = function (options) {
+_exports.CreateCommandWrapper = function (options) {
   return new _command.CommandWrapper(options);
 };
 
-_exports.UndoableCommand = function (options) {
+_exports.CreateUndoableCommand = function (options) {
   return new _command.UndoableCommand(options);
 };
 
-_exports.NullCommand = function (options) {
+_exports.CreateNullCommand = function (options) {
   return new _nullCommand2.default(options);
 };
