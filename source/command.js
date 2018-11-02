@@ -47,11 +47,11 @@ export class CommandWrapper extends UndoableCommand {
   }
 
   execute() {
-    this.executeFn(this.options);
+    return this.executeFn(this.options);
   }
 
   undo() {
-    this.undoFn(this.options);
+    return this.undoFn(this.options);
   }
 
   canUndo() {

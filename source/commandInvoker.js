@@ -17,10 +17,21 @@ export default class CommandInvoker extends Observable {
     if (typeof command === 'undefined' || command === 'null') {
       throw Error('Null argument exception.');
     }
-    const cmd = command instanceof Command ? command : new CommandWrapper(command);
+
+    let cmd = null;
+    if (command instanceof Command) {
+      cmd = command;
+    } else if (typeof command === 'function') {
+      cmd = new CommandWrapper({ execute: command });
+    } else {
+      cmd = new CommandWrapper(command);
+    }
+
     cmd.receiver = this.receiver;
     cmd.invoker = this;
+
     this.commandChain.push(cmd);
+
     try {
       cmd.validate(this.commandStack, this.commandChain);
     } catch (e) {
@@ -74,6 +85,7 @@ export default class CommandInvoker extends Observable {
     }
 
     const action = this.commandChain.shift();
+
     try {
       const promise = Promise.resolve(action.execute());
 

@@ -51,4 +51,52 @@ describe('CommandInvoker', () => {
       // eslint-disable-next-line no-console
       .catch(error => console.error(error));
   });
+
+  it('Can resolve an async function', () => {
+    const resolveAfter2Seconds = () => {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          console.log('2 seconds have passed');
+          resolve('resolved');
+        }, 2000);
+      });
+    };
+
+    async function asyncCall() {
+      console.log('calling');
+      const result = await resolveAfter2Seconds();
+      return result;
+    }
+
+    async function asyncCall2() {
+      return resolveAfter2Seconds();
+    }
+
+    function asyncCall3() {
+      setTimeout(() => {
+        console.log('4 seconds have passed');
+      }, 4000);
+    }
+
+    const receiver = {};
+
+    const invoker = CreateInvoker(receiver);
+    invoker.on('nextCommand', () => console.log('nextCommand'));
+    invoker.on('commandComplete', () => console.log('commandComplete'));
+    invoker.on('complete', () => console.log('complete'));
+    invoker.on('commandFailure', () => console.log('commandFailure'));
+    invoker.on('start', () => console.log('start'));
+    invoker.enqueueCommand(asyncCall);
+    invoker.enqueueCommand(resolveAfter2Seconds);
+    invoker.enqueueCommand(asyncCall2);
+    invoker.enqueueCommand(asyncCall3);
+
+    const processor = invoker.execute();
+
+    expect(processor).to.be.a('promise');
+
+    processor
+      .then(() => console.log('Done'))
+      .catch(() => console.log('Doh!'));
+  });
 });

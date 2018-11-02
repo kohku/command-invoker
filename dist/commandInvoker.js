@@ -48,10 +48,21 @@ var CommandInvoker = function (_Observable) {
       if (typeof command === 'undefined' || command === 'null') {
         throw Error('Null argument exception.');
       }
-      var cmd = command instanceof _command2.default ? command : new _command.CommandWrapper(command);
+
+      var cmd = null;
+      if (command instanceof _command2.default) {
+        cmd = command;
+      } else if (typeof command === 'function') {
+        cmd = new _command.CommandWrapper({ execute: command });
+      } else {
+        cmd = new _command.CommandWrapper(command);
+      }
+
       cmd.receiver = this.receiver;
       cmd.invoker = this;
+
       this.commandChain.push(cmd);
+
       try {
         cmd.validate(this.commandStack, this.commandChain);
       } catch (e) {
@@ -121,6 +132,7 @@ var CommandInvoker = function (_Observable) {
       }
 
       var action = this.commandChain.shift();
+
       try {
         var promise = Promise.resolve(action.execute());
 

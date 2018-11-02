@@ -104,12 +104,12 @@ var CommandWrapper = exports.CommandWrapper = function (_UndoableCommand) {
   }, {
     key: 'execute',
     value: function execute() {
-      this.executeFn(this.options);
+      return this.executeFn(this.options);
     }
   }, {
     key: 'undo',
     value: function undo() {
-      this.undoFn(this.options);
+      return this.undoFn(this.options);
     }
   }, {
     key: 'canUndo',
