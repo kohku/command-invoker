@@ -19,12 +19,11 @@ describe('CommandInvoker', () => {
 
     // Applying a simple command
     invoker.apply({
-      options: { step: 2 },
-      execute: (options) => {
-        receiver.data += options.step;
+      execute: () => {
+        receiver.data += 2;
       },
-      undo: (options) => {
-        receiver.data -= options.step;
+      undo: () => {
+        receiver.data -= 2;
       },
     })
       .then(() => {
@@ -38,12 +37,12 @@ describe('CommandInvoker', () => {
             expect(invoker.canUndo()).toBe(false);
 
             invoker.apply({
-              options: { step: 2 },
-              execute: (options) => {
-                receiver.data += options.step;
+              execute: () => {
+                receiver.data += 2;
               },
             })
               .then(() => {
+                expect(receiver.data).to.equal(4);
                 expect(invoker.canUndo()).toBe(false);
               });
           });

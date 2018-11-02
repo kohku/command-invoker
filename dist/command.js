@@ -15,12 +15,11 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Command = function () {
-  function Command(options) {
+  function Command() {
     _classCallCheck(this, Command);
 
-    this.invoker = undefined;
-    this.options = typeof options !== 'undefined' ? options : {};
-    this.fireAndForget = false;
+    this.receiver = null;
+    this.invoker = null;
   }
 
   _createClass(Command, [{
@@ -80,15 +79,13 @@ var CommandWrapper = exports.CommandWrapper = function (_UndoableCommand) {
   _inherits(CommandWrapper, _UndoableCommand);
 
   function CommandWrapper(_ref) {
-    var _ref$options = _ref.options,
-        options = _ref$options === undefined ? {} : _ref$options,
-        execute = _ref.execute,
+    var execute = _ref.execute,
         validate = _ref.validate,
         undo = _ref.undo;
 
     _classCallCheck(this, CommandWrapper);
 
-    var _this2 = _possibleConstructorReturn(this, (CommandWrapper.__proto__ || Object.getPrototypeOf(CommandWrapper)).call(this, options));
+    var _this2 = _possibleConstructorReturn(this, (CommandWrapper.__proto__ || Object.getPrototypeOf(CommandWrapper)).call(this));
 
     _this2.executeFn = typeof execute === 'function' ? execute : _get(CommandWrapper.prototype.__proto__ || Object.getPrototypeOf(CommandWrapper.prototype), 'execute', _this2);
     _this2.validateFn = typeof validate === 'function' ? validate : _get(CommandWrapper.prototype.__proto__ || Object.getPrototypeOf(CommandWrapper.prototype), 'validate', _this2);
@@ -104,12 +101,12 @@ var CommandWrapper = exports.CommandWrapper = function (_UndoableCommand) {
   }, {
     key: 'execute',
     value: function execute() {
-      return this.executeFn(this.options);
+      return this.executeFn(this.receiver, this.invoker);
     }
   }, {
     key: 'undo',
     value: function undo() {
-      return this.undoFn(this.options);
+      return this.undoFn(this.receiver, this.invoker);
     }
   }, {
     key: 'canUndo',

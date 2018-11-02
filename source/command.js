@@ -1,9 +1,8 @@
 
 export default class Command {
-  constructor(options) {
-    this.invoker = undefined;
-    this.options = typeof options !== 'undefined' ? options : {};
-    this.fireAndForget = false;
+  constructor() {
+    this.receiver = null;
+    this.invoker = null;
   }
 
   broadcast(message) {
@@ -31,12 +30,11 @@ export class UndoableCommand extends Command {
 
 export class CommandWrapper extends UndoableCommand {
   constructor({
-    options = {},
     execute,
     validate,
     undo,
   }) {
-    super(options);
+    super();
     this.executeFn = typeof execute === 'function' ? execute : super.execute;
     this.validateFn = typeof validate === 'function' ? validate : super.validate;
     this.undoFn = typeof undo === 'function' ? undo : super.undo;
@@ -47,11 +45,11 @@ export class CommandWrapper extends UndoableCommand {
   }
 
   execute() {
-    return this.executeFn(this.options);
+    return this.executeFn(this.receiver, this.invoker);
   }
 
   undo() {
-    return this.undoFn(this.options);
+    return this.undoFn(this.receiver, this.invoker);
   }
 
   canUndo() {

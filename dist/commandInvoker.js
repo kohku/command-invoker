@@ -136,13 +136,8 @@ var CommandInvoker = function (_Observable) {
       try {
         var promise = Promise.resolve(action.execute());
 
-        promise.then(function (args) {
-          var _ref = args || {},
-              fireAndForget = _ref.fireAndForget;
-
-          if (!fireAndForget) {
-            _this3.trigger('commandComplete', action, args);
-          }
+        promise.then(function () {
+          _this3.trigger('commandComplete', action);
         }).catch(function (e) {
           _this3.trigger('commandFailure', action, e);
         });
@@ -168,11 +163,10 @@ var CommandInvoker = function (_Observable) {
     // <summary>
     // Event triggered when a command is complete.
     // </summary>
-    // eslint-disable-next-line no-unused-vars
 
   }, {
     key: 'onCommandComplete',
-    value: function onCommandComplete(command, response) {
+    value: function onCommandComplete(command) {
       if (typeof command === 'undefined' || command === null) {
         return;
       }

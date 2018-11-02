@@ -89,12 +89,8 @@ export default class CommandInvoker extends Observable {
     try {
       const promise = Promise.resolve(action.execute());
 
-      promise.then((args) => {
-        const { fireAndForget } = args || {};
-
-        if (!fireAndForget) {
-          this.trigger('commandComplete', action, args);
-        }
+      promise.then(() => {
+        this.trigger('commandComplete', action);
       }).catch((e) => {
         this.trigger('commandFailure', action, e);
       });
@@ -117,8 +113,7 @@ export default class CommandInvoker extends Observable {
   // <summary>
   // Event triggered when a command is complete.
   // </summary>
-  // eslint-disable-next-line no-unused-vars
-  onCommandComplete(command, response) {
+  onCommandComplete(command) {
     if (typeof command === 'undefined' || command === null) {
       return;
     }
