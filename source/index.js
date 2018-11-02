@@ -1,3 +1,4 @@
+import "es6-promise/auto";
 import CommandInvoker from './commandInvoker';
 import Command, { UndoableCommand, CommandWrapper } from './command';
 import NullCommand from './nullCommand';
