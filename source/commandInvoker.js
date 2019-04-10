@@ -89,8 +89,8 @@ export default class CommandInvoker extends Observable {
     try {
       const promise = Promise.resolve(action.execute());
 
-      promise.then(() => {
-        this.trigger('commandComplete', action);
+      promise.then((response) => {
+        this.trigger('commandComplete', action, response);
       }).catch((e) => {
         this.trigger('commandFailure', action, e);
       });
