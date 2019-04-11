@@ -10,13 +10,13 @@ return _inherits(b,a),_createClass(b,[{key:"enqueueCommand",value:function c(a){
 },{key:"apply",value:function b(a){return this.enqueueCommand(a),this.execute()}// <summary>
 // Starts execution of the command chain
 // </summary>
-},{key:"execute",value:function c(){var a=this,b=!!(0<arguments.length&&void 0!==arguments[0])&&arguments[0];return this.continueOnFailures=b,new Promise(function(b,c){a.inProgress=!0,a.on("nextCommand",a.executeNext),a.on("commandComplete",a.onCommandComplete),a.on("complete",a.onComplete.bind(a,b)),a.on("commandFailure",a.onCommandFailure.bind(a,c,b)),a.trigger("start",a.commandChain.length),a.trigger("nextCommand")})}// <summary>
+},{key:"execute",value:function c(){var a=this,b=!!(0<arguments.length&&void 0!==arguments[0])&&arguments[0];return this.continueOnFailures=b,new Promise(function(b,c){a.inProgress=!0,a.on("nextCommand",a.executeNext),a.on("commandComplete",a.onCommandComplete),a.on("complete",a.onComplete.bind(a,b)),a.on("commandFailure",a.onCommandFailure.bind(a,c)),a.trigger("start",a.commandChain.length),a.trigger("nextCommand")})}// <summary>
 // Executes next command from the command chain
 // </summary>
 },{key:"executeNext",value:function c(){var a=this;if(0===this.commandChain.length)return void this.trigger("complete");var b=this.commandChain.shift();try{var d=Promise.resolve(b.execute());d.then(function(c){a.trigger("commandComplete",b,c)}).catch(function(c){a.trigger("commandFailure",b,c)})}catch(a){this.trigger("commandFailure",b,a)}}// <summary>
 // Event triggered when a command failed to execute.
 // </summary>
-},{key:"onCommandFailure",value:function e(a,b,c,d){this.continueOnFailures?b({error:d}):(this.clear(),"undefined"!=typeof a&&"function"==typeof a&&a(d))}// <summary>
+},{key:"onCommandFailure",value:function d(a,b,c){return this.continueOnFailures?void this.onCommandComplete(b):void(this.clear(),"undefined"!=typeof a&&"function"==typeof a&&a(c))}// <summary>
 // Event triggered when a command is complete.
 // </summary>
 },{key:"onCommandComplete",value:function b(a){"undefined"==typeof a||null===a||((0>this.redoStack.indexOf(a)||a!==this.redoStack.pop())&&this.redoStack.splice(0,this.redoStack.length),0>this.commandStack.indexOf(a)&&this.commandStack.push(a),this.trigger("nextCommand"))}// <summary>
