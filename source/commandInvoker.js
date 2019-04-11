@@ -8,6 +8,7 @@ export default class CommandInvoker extends Observable {
     this.commandStack = [];
     this.redoStack = [];
     this.receiver = receiver;
+    this.continueOnFailures = false;
   }
 
   // <summary>
@@ -63,13 +64,14 @@ export default class CommandInvoker extends Observable {
   // <summary>
   // Starts execution of the command chain
   // </summary>
-  execute() {
+  execute(continueOnFailures = false) {
+    this.continueOnFailures = continueOnFailures;
     return new Promise((resolve, reject) => {
       this.inProgress = true;
       this.on('nextCommand', this.executeNext);
       this.on('commandComplete', this.onCommandComplete);
       this.on('complete', this.onComplete.bind(this, resolve));
-      this.on('commandFailure', this.onCommandFailure.bind(this, reject));
+      this.on('commandFailure', this.onCommandFailure.bind(this, reject, resolve));
       this.trigger('start', this.commandChain.length);
       this.trigger('nextCommand');
     });
@@ -102,11 +104,15 @@ export default class CommandInvoker extends Observable {
   // <summary>
   // Event triggered when a command failed to execute.
   // </summary>
-  onCommandFailure(reject, command, error) {
-    this.clear();
+  onCommandFailure(reject, resolve, command, error) {
+    if (!this.continueOnFailures) {
+      this.clear();
 
-    if (typeof reject !== 'undefined' && typeof reject === 'function') {
-      reject(error);
+      if (typeof reject !== 'undefined' && typeof reject === 'function') {
+        reject(error);
+      }
+    } else {
+      resolve({ error });
     }
   }
 
