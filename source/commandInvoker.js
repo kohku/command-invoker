@@ -71,7 +71,7 @@ export default class CommandInvoker extends Observable {
       this.on('nextCommand', this.executeNext);
       this.on('commandComplete', this.onCommandComplete);
       this.on('complete', this.onComplete.bind(this, resolve));
-      this.on('commandFailure', this.onCommandFailure.bind(this, reject, resolve));
+      this.on('commandFailure', this.onCommandFailure.bind(this, reject));
       this.trigger('start', this.commandChain.length);
       this.trigger('nextCommand');
     });
@@ -104,15 +104,16 @@ export default class CommandInvoker extends Observable {
   // <summary>
   // Event triggered when a command failed to execute.
   // </summary>
-  onCommandFailure(reject, resolve, command, error) {
-    if (!this.continueOnFailures) {
-      this.clear();
+  onCommandFailure(reject, command, error) {
+    if (this.continueOnFailures) {
+      this.onCommandComplete(command);
+      return;
+    }
 
-      if (typeof reject !== 'undefined' && typeof reject === 'function') {
-        reject(error);
-      }
-    } else {
-      resolve({ error });
+    this.clear();
+
+    if (typeof reject !== 'undefined' && typeof reject === 'function') {
+      reject(error);
     }
   }
 
