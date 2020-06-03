@@ -1,1 +1,9 @@
-Command Invoker
+# Command Invoker
+
+Utility that implements the chain-of-responsibilty pattern.
+
+It uses a mechanism for adding new processing objects to the end of a chain.
+
+Useful on long runing/multiple activities processing queues.
+
+Help to undo actions where possible.
