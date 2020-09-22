@@ -37,7 +37,7 @@ export class CommandWrapper extends UndoableCommand {
     super();
     this.executeFn = typeof execute === 'function' ? execute : super.execute;
     this.validateFn = typeof validate === 'function' ? validate : super.validate;
-    this.undoFn = typeof undo === 'function' ? undo : super.undo;
+    this.undoFn = typeof undo === 'function' ? undo : undefined;
   }
 
   validate() {
@@ -53,6 +53,6 @@ export class CommandWrapper extends UndoableCommand {
   }
 
   canUndo() {
-    return typeof this.undoFn !== 'undefined';
+    return typeof this.undoFn === 'function';
   }
 }

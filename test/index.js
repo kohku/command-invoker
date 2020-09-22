@@ -5,53 +5,69 @@ const { CreateInvoker } = require('../dist');
 describe('CommandInvoker', () => {
   // eslint-disable-next-line no-undef
   it('Can be created', () => {
-    const receiver = {};
-
-    const invoker = CreateInvoker(receiver);
-
+    const invoker = CreateInvoker({});
     expect(invoker).to.be.a('object');
     // eslint-disable-next-line no-unused-expressions
     expect(invoker.canUndo()).to.be.false;
     // eslint-disable-next-line no-unused-expressions
     expect(invoker.canRedo()).to.be.false;
+  });
 
-    receiver.data = 2;
-
+  it ('Execute one command', (done) => {
+    const receiver = { data: 2 };
+    const invoker = CreateInvoker(receiver);
     // Applying a simple command
-    invoker.apply({
-      execute: () => {
-        receiver.data += 2;
-      },
-      undo: () => {
-        receiver.data -= 2;
-      },
+    invoker.apply(() => {
+      receiver.data += 2;
     })
       .then(() => {
         expect(receiver.data).to.equal(4);
-        expect(invoker.canUndo()).to.equal(true);
-
-        // Undoing things
-        invoker.undo()
-          .then(() => {
-            expect(receiver.data).toBe(2);
-            expect(invoker.canUndo()).toBe(false);
-
-            invoker.apply({
-              execute: () => {
-                receiver.data += 2;
-              },
-            })
-              .then(() => {
-                expect(receiver.data).to.equal(4);
-                expect(invoker.canUndo()).toBe(false);
-              });
-          });
+        expect(invoker.canUndo()).to.equal(false);
+        done();
       })
-      // eslint-disable-next-line no-console
-      .catch(error => console.error(error));
+      .catch((error) => {
+        done(error);
+      });
   });
 
-  it('Can resolve an async function', () => {
+  it ('Execute and undo one command', (done) => {
+    const invoker = CreateInvoker({ data: 2 });
+    // Applying a simple command
+    invoker.apply({
+      execute: (receiver) => {
+        receiver.data += 2;
+      },
+      undo: (receiver) => {
+        receiver.data -= 2;
+      },
+    })
+      .then((receiver) => {
+        expect(receiver.data).to.equal(4);
+        expect(invoker.canUndo()).to.equal(true);
+        // Undoing things
+        return invoker.undo();
+      })
+      .then((receiver) => {
+        expect(receiver.data).to.equal(2);
+        expect(invoker.canUndo()).to.equal(false);
+        return invoker.apply({
+          execute: (receiver) => {
+            receiver.data += 2;
+          },
+        });
+      })
+      .then((receiver) => {
+        expect(receiver.data).to.equal(4);
+        expect(invoker.canUndo()).to.equal(false);
+        done();
+      })
+      // eslint-disable-next-line no-console
+      .catch((error) => {
+        done(error);
+      });
+  });
+
+  it('Can resolve an async function', (done) => {
     const resolveAfter2Seconds = () => {
       return new Promise((resolve) => {
         setTimeout(() => {
@@ -95,7 +111,49 @@ describe('CommandInvoker', () => {
     expect(processor).to.be.a('promise');
 
     processor
-      .then(() => console.log('Done'))
-      .catch(() => console.log('Doh!'));
+      .then(() => {
+        done();
+      })
+      .catch((error) => {
+        done(error);
+      });
+  }).timeout(7000);
+
+  it ('Can resolve more complex scenarios', (done) => {
+    const invoker = CreateInvoker({ data: 2 });
+
+    const addSubstractTwo = {
+      execute: (receiver) => {
+        console.log(receiver);
+        console.log('Adding 2');
+        receiver.data += 2;
+      },
+      undo: (receiver) => {
+        console.log(receiver);
+        console.log('Substracting 2');
+        receiver.data -= 2;
+      },
+    };
+    
+    invoker.enqueueCommand(addSubstractTwo)
+    invoker.enqueueCommand(addSubstractTwo)
+    invoker.enqueueCommand(addSubstractTwo)
+
+    invoker.execute()
+      .then((receiver) => {
+        expect(receiver.data).to.equal(8);
+        expect(invoker.canUndo()).to.equal(true);
+        // Undoing things
+        return invoker.undoAll();
+      })
+      .then((receiver) => {
+        expect(receiver.data).to.equal(2);
+        expect(invoker.canUndo()).to.equal(false);
+        done();
+      })
+      // eslint-disable-next-line no-console
+      .catch((error) => {
+        done(error);
+      });
   });
 });

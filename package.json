@@ -4,7 +4,7 @@
   "description": "Module to help encapsulate method invocation",
   "main": "./dist/index.js",
   "scripts": {
-    "lint": "standard",
+    "lint": "eslint ./source/index.js",
     "test": "node ./node_modules/mocha/bin/mocha",
     "build": "./node_modules/.bin/babel source --out-dir dist",
     "prepublish": "npm run build"
