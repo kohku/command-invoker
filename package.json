@@ -1,6 +1,6 @@
 {
   "name": "command-invoker",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Module to help encapsulate method invocation",
   "main": "./dist/index.js",
   "scripts": {
