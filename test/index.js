@@ -134,14 +134,29 @@ describe('CommandInvoker', () => {
         receiver.data -= 2;
       },
     };
+
+    const asyncAddTwo = async (receiver) => {
+      console.log(receiver);
+      console.log('Adding 2');
+      receiver.data += 2;
+      await Promise.resolve();
+    };
+
+    const asyncSubstractTwo = async (receiver) => {
+      console.log(receiver);
+      console.log('Substracting 2');
+      receiver.data -= 2;
+      await Promise.resolve();
+    };
     
-    invoker.enqueueCommand(addSubstractTwo)
-    invoker.enqueueCommand(addSubstractTwo)
-    invoker.enqueueCommand(addSubstractTwo)
+    invoker.enqueueCommand(addSubstractTwo);
+    invoker.enqueueCommand(addSubstractTwo);
+    invoker.enqueueCommand(addSubstractTwo);
+    invoker.enqueueCommand(asyncAddTwo, asyncSubstractTwo);
 
     invoker.execute()
       .then((receiver) => {
-        expect(receiver.data).to.equal(8);
+        expect(receiver.data).to.equal(10);
         expect(invoker.canUndo()).to.equal(true);
         // Undoing things
         return invoker.undoAll();
