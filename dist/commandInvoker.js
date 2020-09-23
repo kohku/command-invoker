@@ -25,7 +25,7 @@ _inherits(b,a);var c=_createSuper(b);return _createClass(b,[{key:"enqueueCommand
 },{key:"onComplete",value:function onComplete(a){this.clear(),"undefined"!=typeof a&&"function"==typeof a&&a(this.receiver)}// <summary>
 // Clear the command chain
 // </summary>
-},{key:"clear",value:function clear(){this.off("undoNext",this.undoNext),this.off("undoCompleted",this.onUndoCompleted),this.off("onUndone",this.onUndone),this.off("onUndoFailed",this.onUndoFailed),this.off("nextCommand",this.executeNext),this.off("commandComplete",this.onCommandComplete),this.off("complete",this.onComplete),this.off("commandFailure",this.onCommandFailure),this.inProgress=!1,this.continueOnFailures=!1}// <summary>
+},{key:"clear",value:function clear(){this.off("undoNext"),this.off("undoCompleted"),this.off("onUndone"),this.off("onUndoFailed"),this.off("nextCommand"),this.off("commandComplete"),this.off("complete"),this.off("commandFailure"),this.inProgress=!1,this.continueOnFailures=!1}// <summary>
 // Returns true if an undoable action is available to undo.
 // </summary>
 },{key:"canUndo",value:function canUndo(){return!this.inProgress&&this._canUndo()}},{key:"_canUndo",value:function _canUndo(){return!this.continueOnFailures&&0<this.commandStack.length&&this.commandStack[this.commandStack.length-1]instanceof _command.UndoableCommand&&this.commandStack[this.commandStack.length-1].canUndo()}// <summary>
@@ -34,7 +34,7 @@ _inherits(b,a);var c=_createSuper(b);return _createClass(b,[{key:"enqueueCommand
 },{key:"undo",value:function undo(){var a=this;return this.inProgress=!0,new Promise(function(b,c){if(a.on("onUndone",a.onUndone.bind(a,b)),a.on("onUndoFailed",a.onUndoFailed.bind(a,c)),!a._canUndo())return c(new Error("Nothing to undo"));var d=a.commandStack.pop();return Promise.resolve(d.undo(a.receiver,a)).then(function(b){a.trigger("onUndone",d,b)})["catch"](function(b){a.trigger("onUndoFailed",d,b)})["finally"](function(){a.inProgress=!1})})}// <summary>
 // Undo the last action, if undoable
 // </summary>
-},{key:"undoAll",value:function undoAll(){var a=this;return this.inProgress=!0,new Promise(function(b,c){a.on("undoNext",a.undoNext),a.on("undoCompleted",a.onUndoCompleted),a.on("onUndone",a.onUndone.bind(a,b)),a.on("onUndoFailed",a.onUndoFailed.bind(a,c)),a.trigger("undoNext")})}// <summary>
+},{key:"undoAll",value:function undoAll(){var a=this;return this.inProgress=!0,new Promise(function(b,c){a.on("undoNext",a.undoNext),a.on("undoCompleted",a.onUndoCompleted),a.on("onUndone",a.onUndone.bind(a,b)),a.on("onUndoFailed",a.onUndoFailed.bind(a,c)),a.trigger("start",a.commandStack.length),a.trigger("undoNext")})}// <summary>
 // Undo the next undoable action, if undoable
 // </summary>
 },{key:"undoNext",value:function undoNext(){var a=this;if(!this._canUndo())return this.trigger("onUndone"),Promise.resolve(this.receiver);var b=this.commandStack.pop();try{var c=Promise.resolve(b.undo());return c.then(function(c){a.trigger("undoCompleted",b,c)})["catch"](function(c){a.trigger("onUndoFailed",b,c)})}catch(a){return this.trigger("onUndoFailed",b,a),Promise.reject(a)}}// <summary>

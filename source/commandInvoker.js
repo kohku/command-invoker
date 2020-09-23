@@ -153,14 +153,14 @@ export default class CommandInvoker extends Observable {
   // Clear the command chain
   // </summary>
   clear () {
-    this.off('undoNext', this.undoNext);
-    this.off('undoCompleted', this.onUndoCompleted);
-    this.off('onUndone', this.onUndone);
-    this.off('onUndoFailed', this.onUndoFailed);
-    this.off('nextCommand', this.executeNext);
-    this.off('commandComplete', this.onCommandComplete);
-    this.off('complete', this.onComplete);
-    this.off('commandFailure', this.onCommandFailure);
+    this.off('undoNext');
+    this.off('undoCompleted');
+    this.off('onUndone');
+    this.off('onUndoFailed');
+    this.off('nextCommand');
+    this.off('commandComplete');
+    this.off('complete');
+    this.off('commandFailure');
     this.inProgress = false;
     this.continueOnFailures = false;
   }
@@ -216,6 +216,7 @@ export default class CommandInvoker extends Observable {
       this.on('undoCompleted', this.onUndoCompleted);
       this.on('onUndone', this.onUndone.bind(this, resolve));
       this.on('onUndoFailed', this.onUndoFailed.bind(this, reject));
+      this.trigger('start', this.commandStack.length);
       this.trigger('undoNext');
     });
   }
