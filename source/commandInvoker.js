@@ -1,5 +1,7 @@
 import Observable from './observable';
-import Command, { UndoableCommand, CommandWrapper } from './command';
+import Command from './command';
+import UndoableCommand from './undoableCommand';
+import CommandWrapper from './commandWrapper';
 
 export default class CommandInvoker extends Observable {
   constructor(receiver) {
@@ -88,38 +90,40 @@ export default class CommandInvoker extends Observable {
   // <summary>
   // Executes next command from the command chain
   // </summary>
-  executeNext () {
+  executeNext(prevState) {
     if (this.commandChain.length === 0) {
-      this.trigger('complete');
-      return Promise.resolve(this.receiver);
+      this.trigger('complete', prevState);
+      return;
     }
 
     const action = this.commandChain.shift();
 
     try {
-      const promise = Promise.resolve(action.execute(this.receiver, this));
+      const promise = Promise.resolve(
+        action.execute(this.receiver, prevState, this),
+      );
 
-      return promise.then((response) => {
-        this.trigger('commandComplete', action, response);
+      promise.then((state) => {
+        this.trigger('commandComplete', action, state);
       }).catch((e) => {
         this.trigger('commandFailure', action, e);
       });
     } catch (e) {
       this.trigger('commandFailure', action, e);
-      return Promise.reject(e);
+      Promise.reject(e);
     }
   }
 
   // <summary>
   // Event triggered when a command is complete.
   // </summary>
-  onCommandComplete(command) {
+  onCommandComplete(command, state) {
     if (typeof command !== 'undefined' && command !== null) {
       // Executed successfully, push it into command stack
       this.commandStack.push(command);
     }
 
-    this.trigger('nextCommand');
+    this.trigger('nextCommand', state);
   }
 
   // <summary>
@@ -141,18 +145,21 @@ export default class CommandInvoker extends Observable {
   // <summary>
   // Event triggered when there are not more commands to execute in the command chain
   // </summary>
-  onComplete(resolve) {
+  onComplete(resolve, state) {
     this.clear();
 
     if (typeof resolve !== 'undefined' && typeof resolve === 'function') {
-      resolve(this.receiver);
+      resolve({
+        receiver: this.receiver,
+        state,
+      });
     }
   }
 
   // <summary>
   // Clear the command chain
   // </summary>
-  clear () {
+  clear() {
     this.off('undoNext');
     this.off('undoCompleted');
     this.off('onUndone');
@@ -168,13 +175,13 @@ export default class CommandInvoker extends Observable {
   // <summary>
   // Returns true if an undoable action is available to undo.
   // </summary>
-  canUndo () {
-    return !this.inProgress 
-      && this._canUndo();
+  canUndo() {
+    return !this.inProgress
+      && this.internalCanUndo();
   }
 
-  _canUndo () {
-    return !this.continueOnFailures 
+  internalCanUndo() {
+    return !this.continueOnFailures
       && this.commandStack.length > 0
       && this.commandStack[this.commandStack.length - 1] instanceof UndoableCommand
       && this.commandStack[this.commandStack.length - 1].canUndo();
@@ -183,15 +190,15 @@ export default class CommandInvoker extends Observable {
   // <summary>
   // Undo the last action, if undoable
   // </summary>
-  undo () {
+  undo() {
     this.inProgress = true;
-    return new Promise((resolve, reject) => {    
-      this.on('onUndone', this.onUndone.bind(this, resolve));
-      this.on('onUndoFailed', this.onUndoFailed.bind(this, reject));
-
-      if (!this._canUndo()) {
+    return new Promise((resolve, reject) => {
+      if (!this.internalCanUndo()) {
         return reject(new Error('Nothing to undo'));
       }
+
+      this.on('onUndone', this.onUndone.bind(this, resolve));
+      this.on('onUndoFailed', this.onUndoFailed.bind(this, reject));
 
       const action = this.commandStack.pop();
 
@@ -200,16 +207,16 @@ export default class CommandInvoker extends Observable {
           this.trigger('onUndone', action, response);
         }).catch((e) => {
           this.trigger('onUndoFailed', action, e);
-      }).finally(() => {
-        this.inProgress = false;
-      })
+        }).finally(() => {
+          this.inProgress = false;
+        });
     });
   }
 
   // <summary>
   // Undo the last action, if undoable
   // </summary>
-  undoAll () {
+  undoAll() {
     this.inProgress = true;
     return new Promise((resolve, reject) => {
       this.on('undoNext', this.undoNext);
@@ -224,10 +231,10 @@ export default class CommandInvoker extends Observable {
   // <summary>
   // Undo the next undoable action, if undoable
   // </summary>
-  undoNext () {
-    if (!this._canUndo()) {
-      this.trigger('onUndone');
-      return Promise.resolve(this.receiver);
+  undoNext(prevState) {
+    if (!this.internalCanUndo()) {
+      this.trigger('onUndone', prevState);
+      return;
     }
 
     const action = this.commandStack.pop();
@@ -235,27 +242,27 @@ export default class CommandInvoker extends Observable {
     try {
       const promise = Promise.resolve(action.undo());
 
-      return promise.then((response) => {
-        this.trigger('undoCompleted', action, response);
+      promise.then((state) => {
+        this.trigger('undoCompleted', action, state);
       }).catch((e) => {
         this.trigger('onUndoFailed', action, e);
       });
     } catch (e) {
       this.trigger('onUndoFailed', action, e);
-      return Promise.reject(e);
+      Promise.reject(e);
     }
   }
 
   // <summary>
   // Event triggered when a command is undone.
   // </summary>
-  onUndoCompleted(command) {
+  onUndoCompleted(command, state) {
     if (typeof command !== 'undefined' && command !== null) {
       // Executed successfully, push it into redo stack
       this.redoStack.push(command);
     }
 
-    this.trigger('undoNext');
+    this.trigger('undoNext', state);
   }
 
   // <summary>
@@ -272,22 +279,25 @@ export default class CommandInvoker extends Observable {
   // <summary>
   // Event triggered when an action was undone
   // </summary>
-  onUndone(resolve, command) {
+  onUndone(resolve, command, state) {
     this.clear();
 
     if (typeof resolve !== 'undefined' && typeof resolve === 'function') {
-      resolve(this.receiver);
+      resolve({
+        receiver: this.receiver,
+        state,
+      });
     }
   }
 
-  canRedo () {
+  canRedo() {
     return !this.inProgress && this.redoStack.length > 0;
   }
 
   // <summary>
   // Undo the last action, if posible
   // </summary>
-  redo () {
+  redo() {
     if (this.redoStack.length === 0) {
       throw Error('Cannot redo');
     }
@@ -297,7 +307,7 @@ export default class CommandInvoker extends Observable {
   // <summary>
   // Clear all actions peformed and to be performed. Clear the storage service
   // </summary>
-  reset () {
+  reset() {
     this.redoStack.splice(0, this.redoStack.length);
     this.commandChain.splice(0, this.commandChain.length);
     this.commandStack.splice(0, this.commandStack.length);
