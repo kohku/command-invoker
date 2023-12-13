@@ -139,7 +139,7 @@ describe('CommandInvoker', () => {
       });
   }).timeout(7000);
 
-  xit('Can resolve more complex scenarios', (done) => {
+  it('Can resolve more complex scenarios', (done) => {
     const invoker = CreateInvoker({ data: 2 });
 
     const addSubstractTwo = {
@@ -147,26 +147,28 @@ describe('CommandInvoker', () => {
         console.log(receiver);
         console.log('Adding 2');
         receiver.data += 2;
+        return receiver;
       },
       undo: (receiver) => {
         console.log(receiver);
         console.log('Substracting 2');
         receiver.data -= 2;
+        return receiver;
       },
     };
 
-    const asyncAddTwo = async (receiver) => {
+    const asyncAddTwo = (receiver) => {
       console.log(receiver);
       console.log('Adding 2');
       receiver.data += 2;
-      await Promise.resolve();
+      return Promise.resolve(receiver);
     };
 
-    const asyncSubstractTwo = async (receiver) => {
+    const asyncSubstractTwo = (receiver) => {
       console.log(receiver);
       console.log('Substracting 2');
       receiver.data -= 2;
-      await Promise.resolve();
+      return Promise.resolve(receiver);
     };
 
     invoker.enqueueCommand(addSubstractTwo);
@@ -175,13 +177,13 @@ describe('CommandInvoker', () => {
     invoker.enqueueCommand(asyncAddTwo, asyncSubstractTwo);
 
     invoker.execute()
-      .then((receiver) => {
+      .then(({ receiver }) => {
         expect(receiver.data).to.equal(10);
         expect(invoker.canUndo()).to.equal(true);
         // Undoing things
         return invoker.undoAll();
       })
-      .then((receiver) => {
+      .then(({ receiver }) => {
         expect(receiver.data).to.equal(2);
         expect(invoker.canUndo()).to.equal(false);
         done();
