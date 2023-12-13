@@ -90,9 +90,9 @@ export default class CommandInvoker extends Observable {
   // <summary>
   // Executes next command from the command chain
   // </summary>
-  executeNext(prevState) {
+  executeNext(state) {
     if (this.commandChain.length === 0) {
-      this.trigger('complete', prevState);
+      this.trigger('complete', state);
       return;
     }
 
@@ -100,11 +100,11 @@ export default class CommandInvoker extends Observable {
 
     try {
       const promise = Promise.resolve(
-        action.execute(this.receiver, prevState, this),
+        action.execute(this.receiver, state, this),
       );
 
-      promise.then((state) => {
-        this.trigger('commandComplete', action, state);
+      promise.then((nextState) => {
+        this.trigger('commandComplete', action, nextState);
       }).catch((e) => {
         this.trigger('commandFailure', action, e);
       });
@@ -149,10 +149,7 @@ export default class CommandInvoker extends Observable {
     this.clear();
 
     if (typeof resolve !== 'undefined' && typeof resolve === 'function') {
-      resolve({
-        receiver: this.receiver,
-        state,
-      });
+      resolve({ receiver: this.receiver, state });
     }
   }
 
@@ -224,26 +221,26 @@ export default class CommandInvoker extends Observable {
       this.on('onUndone', this.onUndone.bind(this, resolve));
       this.on('onUndoFailed', this.onUndoFailed.bind(this, reject));
       this.trigger('start', this.commandStack.length);
-      this.trigger('undoNext');
+      this.trigger('undoNext', this.receiver);
     });
   }
 
   // <summary>
   // Undo the next undoable action, if undoable
   // </summary>
-  undoNext(prevState) {
+  undoNext(state) {
     if (!this.internalCanUndo()) {
-      this.trigger('onUndone', prevState);
+      this.trigger('onUndone', state);
       return;
     }
 
     const action = this.commandStack.pop();
 
     try {
-      const promise = Promise.resolve(action.undo());
+      const promise = Promise.resolve(action.undo(this.receiver, state, this));
 
-      promise.then((state) => {
-        this.trigger('undoCompleted', action, state);
+      promise.then((nextState) => {
+        this.trigger('undoCompleted', action, nextState);
       }).catch((e) => {
         this.trigger('onUndoFailed', action, e);
       });
@@ -269,6 +266,11 @@ export default class CommandInvoker extends Observable {
   // Event triggered when a command failed to undo.
   // </summary>
   onUndoFailed(reject, command, error) {
+    if (this.continueOnFailures) {
+      this.onUndoCompleted(command);
+      return;
+    }
+
     this.clear();
 
     if (typeof reject !== 'undefined' && typeof reject === 'function') {
@@ -283,10 +285,7 @@ export default class CommandInvoker extends Observable {
     this.clear();
 
     if (typeof resolve !== 'undefined' && typeof resolve === 'function') {
-      resolve({
-        receiver: this.receiver,
-        state,
-      });
+      resolve({ receiver: this.receiver, state });
     }
   }
 

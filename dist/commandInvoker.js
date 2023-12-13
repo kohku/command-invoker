@@ -34,16 +34,16 @@ _inherits(b,a);var c=_createSuper(b);return _createClass(b,[{key:"enqueueCommand
 },{key:"undo",value:function undo(){var a=this;return this.inProgress=!0,new Promise(function(b,c){if(!a.internalCanUndo())return c(new Error("Nothing to undo"));a.on("onUndone",a.onUndone.bind(a,b)),a.on("onUndoFailed",a.onUndoFailed.bind(a,c));var d=a.commandStack.pop();return Promise.resolve(d.undo(a.receiver,a)).then(function(b){a.trigger("onUndone",d,b)})["catch"](function(b){a.trigger("onUndoFailed",d,b)})["finally"](function(){a.inProgress=!1})})}// <summary>
 // Undo the last action, if undoable
 // </summary>
-},{key:"undoAll",value:function undoAll(){var a=this;return this.inProgress=!0,new Promise(function(b,c){a.on("undoNext",a.undoNext),a.on("undoCompleted",a.onUndoCompleted),a.on("onUndone",a.onUndone.bind(a,b)),a.on("onUndoFailed",a.onUndoFailed.bind(a,c)),a.trigger("start",a.commandStack.length),a.trigger("undoNext")})}// <summary>
+},{key:"undoAll",value:function undoAll(){var a=this;return this.inProgress=!0,new Promise(function(b,c){a.on("undoNext",a.undoNext),a.on("undoCompleted",a.onUndoCompleted),a.on("onUndone",a.onUndone.bind(a,b)),a.on("onUndoFailed",a.onUndoFailed.bind(a,c)),a.trigger("start",a.commandStack.length),a.trigger("undoNext",a.receiver)})}// <summary>
 // Undo the next undoable action, if undoable
 // </summary>
-},{key:"undoNext",value:function undoNext(a){var b=this;if(!this.internalCanUndo())return void this.trigger("onUndone",a);var c=this.commandStack.pop();try{var d=Promise.resolve(c.undo());d.then(function(a){b.trigger("undoCompleted",c,a)})["catch"](function(a){b.trigger("onUndoFailed",c,a)})}catch(a){this.trigger("onUndoFailed",c,a),Promise.reject(a)}}// <summary>
+},{key:"undoNext",value:function undoNext(a){var b=this;if(!this.internalCanUndo())return void this.trigger("onUndone",a);var c=this.commandStack.pop();try{var d=Promise.resolve(c.undo(this.receiver,a,this));d.then(function(a){b.trigger("undoCompleted",c,a)})["catch"](function(a){b.trigger("onUndoFailed",c,a)})}catch(a){this.trigger("onUndoFailed",c,a),Promise.reject(a)}}// <summary>
 // Event triggered when a command is undone.
 // </summary>
 },{key:"onUndoCompleted",value:function onUndoCompleted(a,b){"undefined"!=typeof a&&null!==a&&this.redoStack.push(a),this.trigger("undoNext",b)}// <summary>
 // Event triggered when a command failed to undo.
 // </summary>
-},{key:"onUndoFailed",value:function onUndoFailed(a,b,c){this.clear(),"undefined"!=typeof a&&"function"==typeof a&&a(c)}// <summary>
+},{key:"onUndoFailed",value:function onUndoFailed(a,b,c){return this.continueOnFailures?void this.onUndoCompleted(b):void(this.clear(),"undefined"!=typeof a&&"function"==typeof a&&a(c))}// <summary>
 // Event triggered when an action was undone
 // </summary>
 },{key:"onUndone",value:function onUndone(a,b,c){this.clear(),"undefined"!=typeof a&&"function"==typeof a&&a({receiver:this.receiver,state:c})}},{key:"canRedo",value:function canRedo(){return!this.inProgress&&0<this.redoStack.length}// <summary>
