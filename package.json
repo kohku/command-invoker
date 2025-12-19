@@ -1,14 +1,19 @@
 {
   "name": "command-invoker",
-  "version": "3.0.7",
+  "version": "3.0.8",
   "description": "Module to help encapsulate method invocation",
-  "main": "./dist/index.js",
+  "main": "dist/index.js",
+  "types": "dist/commandInvoker.d.ts",
   "scripts": {
-    "lint": "eslint ./source/index.js",
-    "test": "npm run build && node ./node_modules/mocha/bin/mocha",
-    "build": "babel source --out-dir dist",
+    "lint": "eslint source/index.js",
+    "test": "npm run build && npx mocha",
+    "build": "babel source --out-dir dist && cp source/commandInvoker.d.ts dist",
     "prepublish": "npm run build"
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kohku/command-invoker.git"

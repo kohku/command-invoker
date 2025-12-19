@@ -1,3 +1,5 @@
+/* eslint-disable import/named */
+/* eslint-disable import/no-import-module-exports */
 import 'es6-promise/auto';
 import CommandInvoker from './commandInvoker';
 import Command, { UndoableCommand, CommandWrapper } from './command';
